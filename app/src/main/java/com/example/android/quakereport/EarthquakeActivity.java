@@ -45,7 +45,7 @@ public class EarthquakeActivity extends AppCompatActivity
 
     /** URL for earthquake data from the USGS dataset */
     private static final String USGS_REQUEST_URL =
-            "http://earthquake.usgs.gov/fdsnws/event/1/query";
+            "http://content.guardianapis.com/search";
 
     /**
      * Constant value for the earthquake loader ID. We can choose any integer.
@@ -164,10 +164,10 @@ public class EarthquakeActivity extends AppCompatActivity
         Uri baseUri = Uri.parse(USGS_REQUEST_URL);
         Uri.Builder uriBuilder = baseUri.buildUpon();
 
-        uriBuilder.appendQueryParameter("format", "geojson");
-        uriBuilder.appendQueryParameter("limit", "10");
-        uriBuilder.appendQueryParameter("minmag", minMagnitude);
-        uriBuilder.appendQueryParameter("orderby", orderBy);
+        //uriBuilder.appendQueryParameter("q", "news");
+        uriBuilder.appendQueryParameter("api-key", "test");
+        uriBuilder.appendQueryParameter("q", minMagnitude);
+        uriBuilder.appendQueryParameter("order-by", orderBy);
 
         return new EarthquakeLoader(this, uriBuilder.toString());
     }

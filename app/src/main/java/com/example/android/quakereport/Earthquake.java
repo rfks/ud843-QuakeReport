@@ -21,13 +21,13 @@ package com.example.android.quakereport;
 public class Earthquake {
 
     /** Magnitude of the earthquake */
-    private double mMagnitude;
-
-    /** Location of the earthquake */
     private String mLocation;
 
+    /** Location of the earthquake */
+    private String mTitle;
+
     /** Time of the earthquake */
-    private long mTimeInMilliseconds;
+    private String mTimeInMilliseconds;
 
     /** Website URL of the earthquake */
     private String mUrl;
@@ -41,9 +41,9 @@ public class Earthquake {
      *                           earthquake happened
      * @param url is the website URL to find more details about the earthquake
      */
-    public Earthquake(double magnitude, String location, long timeInMilliseconds, String url) {
-        mMagnitude = magnitude;
+    public Earthquake(String location, String title, String timeInMilliseconds, String url) {
         mLocation = location;
+        mTitle=title;
         mTimeInMilliseconds = timeInMilliseconds;
         mUrl = url;
     }
@@ -51,8 +51,8 @@ public class Earthquake {
     /**
      * Returns the magnitude of the earthquake.
      */
-    public double getMagnitude() {
-        return mMagnitude;
+    public String getTitle() {
+        return mTitle;
     }
 
     /**
@@ -65,7 +65,7 @@ public class Earthquake {
     /**
      * Returns the time of the earthquake.
      */
-    public long getTimeInMilliseconds() {
+    public String getTimeInMilliseconds() {
         return mTimeInMilliseconds;
     }
 
