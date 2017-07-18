@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.android.quakereport;
+package com.example.android.newsapp;
 
 import android.app.LoaderManager;
 import android.app.LoaderManager.LoaderCallbacks;
@@ -37,45 +37,51 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EarthquakeActivity extends AppCompatActivity
-        implements LoaderCallbacks<List<Earthquake>>,
+public class NewsActivity extends AppCompatActivity
+        implements LoaderCallbacks<List<Article>>,
         SharedPreferences.OnSharedPreferenceChangeListener {
 
-    private static final String LOG_TAG = EarthquakeActivity.class.getName();
+    private static final String LOG_TAG = NewsActivity.class.getName();
 
-    /** URL for earthquake data from the USGS dataset */
-    private static final String USGS_REQUEST_URL =
+    /**
+     * URL for news article data from the guardian dataset
+     */
+    private static final String GUARDIAN_REQUEST_URL =
             "http://content.guardianapis.com/search";
 
     /**
-     * Constant value for the earthquake loader ID. We can choose any integer.
+     * Constant value for the news loader ID. We can choose any integer.
      * This really only comes into play if you're using multiple loaders.
      */
-    private static final int EARTHQUAKE_LOADER_ID = 1;
+    private static final int GUARDIAN_LOADER_ID = 1;
 
-    /** Adapter for the list of earthquakes */
-    private EarthquakeAdapter mAdapter;
+    /**
+     * Adapter for the list of news
+     */
+    private ArticleAdapter mAdapter;
 
-    /** TextView that is displayed when the list is empty */
+    /**
+     * TextView that is displayed when the list is empty
+     */
     private TextView mEmptyStateTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.earthquake_activity);
+        setContentView(R.layout.news_activity);
 
         // Find a reference to the {@link ListView} in the layout
-        ListView earthquakeListView = (ListView) findViewById(R.id.list);
+        ListView newsListView = (ListView) findViewById(R.id.list);
 
         mEmptyStateTextView = (TextView) findViewById(R.id.empty_view);
-        earthquakeListView.setEmptyView(mEmptyStateTextView);
+        newsListView.setEmptyView(mEmptyStateTextView);
 
-        // Create a new adapter that takes an empty list of earthquakes as input
-        mAdapter = new EarthquakeAdapter(this, new ArrayList<Earthquake>());
+        // Create a new adapter that takes an empty list of articles as input
+        mAdapter = new ArticleAdapter(this, new ArrayList<Article>());
 
         // Set the adapter on the {@link ListView}
         // so the list can be populated in the user interface
-        earthquakeListView.setAdapter(mAdapter);
+        newsListView.setAdapter(mAdapter);
 
         // Obtain a reference to the SharedPreferences file for this app
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -84,17 +90,17 @@ public class EarthquakeActivity extends AppCompatActivity
         prefs.registerOnSharedPreferenceChangeListener(this);
 
         // Set an item click listener on the ListView, which sends an intent to a web browser
-        // to open a website with more information about the selected earthquake.
-        earthquakeListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        // to open a website with more information about the selected article.
+        newsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                // Find the current earthquake that was clicked on
-                Earthquake currentEarthquake = mAdapter.getItem(position);
+                // Find the current article that was clicked on
+                Article currentArticle = mAdapter.getItem(position);
 
                 // Convert the String URL into a URI object (to pass into the Intent constructor)
-                Uri earthquakeUri = Uri.parse(currentEarthquake.getUrl());
+                Uri earthquakeUri = Uri.parse(currentArticle.getUrl());
 
-                // Create a new intent to view the earthquake URI
+                // Create a new intent to view the article URI
                 Intent websiteIntent = new Intent(Intent.ACTION_VIEW, earthquakeUri);
 
                 // Send the intent to launch a new activity
@@ -117,7 +123,7 @@ public class EarthquakeActivity extends AppCompatActivity
             // Initialize the loader. Pass in the int ID constant defined above and pass in null for
             // the bundle. Pass in this activity for the LoaderCallbacks parameter (which is valid
             // because this activity implements the LoaderCallbacks interface).
-            loaderManager.initLoader(EARTHQUAKE_LOADER_ID, null, this);
+            loaderManager.initLoader(GUARDIAN_LOADER_ID, null, this);
         } else {
             // Otherwise, display error
             // First, hide loading indicator so error message will be visible
@@ -131,8 +137,8 @@ public class EarthquakeActivity extends AppCompatActivity
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-        if (key.equals(getString(R.string.settings_min_magnitude_key)) ||
-                key.equals(getString(R.string.settings_order_by_key))){
+        if (key.equals(getString(R.string.settings_search_key)) ||
+                key.equals(getString(R.string.settings_order_by_key))) {
             // Clear the ListView as a new query will be kicked off
             mAdapter.clear();
 
@@ -143,56 +149,55 @@ public class EarthquakeActivity extends AppCompatActivity
             View loadingIndicator = findViewById(R.id.loading_indicator);
             loadingIndicator.setVisibility(View.VISIBLE);
 
-            // Restart the loader to requery the USGS as the query settings have been updated
-            getLoaderManager().restartLoader(EARTHQUAKE_LOADER_ID, null, this);
+            // Restart the loader to requery the guardian as the query settings have been updated
+            getLoaderManager().restartLoader(GUARDIAN_LOADER_ID, null, this);
         }
     }
 
     @Override
-    public Loader<List<Earthquake>> onCreateLoader(int i, Bundle bundle) {
+    public Loader<List<Article>> onCreateLoader(int i, Bundle bundle) {
 
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String minMagnitude = sharedPrefs.getString(
-                getString(R.string.settings_min_magnitude_key),
-                getString(R.string.settings_min_magnitude_default));
+        String searchPhrase = sharedPrefs.getString(
+                getString(R.string.settings_search_key),
+                getString(R.string.settings_search_default));
 
         String orderBy = sharedPrefs.getString(
                 getString(R.string.settings_order_by_key),
                 getString(R.string.settings_order_by_default)
         );
 
-        Uri baseUri = Uri.parse(USGS_REQUEST_URL);
+        Uri baseUri = Uri.parse(GUARDIAN_REQUEST_URL);
         Uri.Builder uriBuilder = baseUri.buildUpon();
 
-        //uriBuilder.appendQueryParameter("q", "news");
         uriBuilder.appendQueryParameter("api-key", "test");
-        uriBuilder.appendQueryParameter("q", minMagnitude);
+        uriBuilder.appendQueryParameter("q", searchPhrase);
         uriBuilder.appendQueryParameter("order-by", orderBy);
 
-        return new EarthquakeLoader(this, uriBuilder.toString());
+        return new ArticleLoader(this, uriBuilder.toString());
     }
 
     @Override
-    public void onLoadFinished(Loader<List<Earthquake>> loader, List<Earthquake> earthquakes) {
+    public void onLoadFinished(Loader<List<Article>> loader, List<Article> articles) {
         // Hide loading indicator because the data has been loaded
         View loadingIndicator = findViewById(R.id.loading_indicator);
         loadingIndicator.setVisibility(View.GONE);
 
-        // Set empty state text to display "No earthquakes found."
-        mEmptyStateTextView.setText(R.string.no_earthquakes);
+        // Set empty state text to display "No articles found."
+        mEmptyStateTextView.setText(R.string.no_news);
 
-        // Clear the adapter of previous earthquake data
+        // Clear the adapter of previous news data
         mAdapter.clear();
 
-        // If there is a valid list of {@link Earthquake}s, then add them to the adapter's
+        // If there is a valid list of {@link Article}s, then add them to the adapter's
         // data set. This will trigger the ListView to update.
-        if (earthquakes != null && !earthquakes.isEmpty()) {
-            mAdapter.addAll(earthquakes);
+        if (articles != null && !articles.isEmpty()) {
+            mAdapter.addAll(articles);
         }
     }
 
     @Override
-    public void onLoaderReset(Loader<List<Earthquake>> loader) {
+    public void onLoaderReset(Loader<List<Article>> loader) {
         // Loader reset, so we can clear out our existing data.
         mAdapter.clear();
     }
